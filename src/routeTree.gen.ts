@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
+import { Route as ApplicationsReferenceRouteImport } from './routes/applications/$reference'
 import { Route as ServicesIndexRouteImport } from './routes/services/index'
 import { Route as ServicesCodeRouteImport } from './routes/services/$code'
 
@@ -30,6 +32,16 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplicationsIndexRoute = ApplicationsIndexRouteImport.update({
+  id: '/applications/',
+  path: '/applications/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationsReferenceRoute = ApplicationsReferenceRouteImport.update({
+  id: '/applications/$reference',
+  path: '/applications/$reference',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ServicesIndexRoute = ServicesIndexRouteImport.update({
   id: '/services/',
   path: '/services/',
@@ -45,14 +57,18 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
+  '/applications/': typeof ApplicationsIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
+  '/applications': typeof ApplicationsIndexRoute
   '/services': typeof ServicesIndexRoute
 }
 export interface FileRoutesById {
@@ -60,23 +76,48 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
+  '/applications/': typeof ApplicationsIndexRoute
   '/services/': typeof ServicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/services/$code' | '/services/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/applications/$reference'
+    | '/services/$code'
+    | '/applications/'
+    | '/services/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/services/$code' | '/services'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/applications/$reference'
+    | '/services/$code'
+    | '/applications'
+    | '/services'
   id:
-    '__root__' | '/' | '/auth' | '/dashboard' | '/services/$code' | '/services/'
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/applications/$reference'
+    | '/services/$code'
+    | '/applications/'
+    | '/services/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  ApplicationsReferenceRoute: typeof ApplicationsReferenceRoute
   ServicesCodeRoute: typeof ServicesCodeRoute
+  ApplicationsIndexRoute: typeof ApplicationsIndexRoute
   ServicesIndexRoute: typeof ServicesIndexRoute
 }
 
@@ -103,6 +144,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/applications/': {
+      id: '/applications/'
+      path: '/applications'
+      fullPath: '/applications/'
+      preLoaderRoute: typeof ApplicationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applications/$reference': {
+      id: '/applications/$reference'
+      path: '/applications/$reference'
+      fullPath: '/applications/$reference'
+      preLoaderRoute: typeof ApplicationsReferenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/services/': {
       id: '/services/'
       path: '/services'
@@ -124,7 +179,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  ApplicationsReferenceRoute: ApplicationsReferenceRoute,
   ServicesCodeRoute: ServicesCodeRoute,
+  ApplicationsIndexRoute: ApplicationsIndexRoute,
   ServicesIndexRoute: ServicesIndexRoute,
 }
 export const routeTree = rootRouteImport
