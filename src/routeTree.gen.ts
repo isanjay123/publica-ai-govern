@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as GrievancesRouteImport } from './routes/grievances'
+import { Route as IntegrityRouteImport } from './routes/integrity'
 import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
 import { Route as ApplicationsReferenceRouteImport } from './routes/applications/$reference'
 import { Route as ServicesIndexRouteImport } from './routes/services/index'
@@ -30,6 +32,16 @@ const AuthRoute = AuthRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GrievancesRoute = GrievancesRouteImport.update({
+  id: '/grievances',
+  path: '/grievances',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegrityRoute = IntegrityRouteImport.update({
+  id: '/integrity',
+  path: '/integrity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplicationsIndexRoute = ApplicationsIndexRouteImport.update({
@@ -57,6 +69,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/grievances': typeof GrievancesRoute
+  '/integrity': typeof IntegrityRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
   '/applications/': typeof ApplicationsIndexRoute
@@ -66,6 +80,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/grievances': typeof GrievancesRoute
+  '/integrity': typeof IntegrityRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
   '/applications': typeof ApplicationsIndexRoute
@@ -76,6 +92,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/grievances': typeof GrievancesRoute
+  '/integrity': typeof IntegrityRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
   '/applications/': typeof ApplicationsIndexRoute
@@ -87,6 +105,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/grievances'
+    | '/integrity'
     | '/applications/$reference'
     | '/services/$code'
     | '/applications/'
@@ -96,6 +116,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/grievances'
+    | '/integrity'
     | '/applications/$reference'
     | '/services/$code'
     | '/applications'
@@ -105,6 +127,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/grievances'
+    | '/integrity'
     | '/applications/$reference'
     | '/services/$code'
     | '/applications/'
@@ -115,6 +139,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  GrievancesRoute: typeof GrievancesRoute
+  IntegrityRoute: typeof IntegrityRoute
   ApplicationsReferenceRoute: typeof ApplicationsReferenceRoute
   ServicesCodeRoute: typeof ServicesCodeRoute
   ApplicationsIndexRoute: typeof ApplicationsIndexRoute
@@ -142,6 +168,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grievances': {
+      id: '/grievances'
+      path: '/grievances'
+      fullPath: '/grievances'
+      preLoaderRoute: typeof GrievancesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrity': {
+      id: '/integrity'
+      path: '/integrity'
+      fullPath: '/integrity'
+      preLoaderRoute: typeof IntegrityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/applications/': {
@@ -179,6 +219,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  GrievancesRoute: GrievancesRoute,
+  IntegrityRoute: IntegrityRoute,
   ApplicationsReferenceRoute: ApplicationsReferenceRoute,
   ServicesCodeRoute: ServicesCodeRoute,
   ApplicationsIndexRoute: ApplicationsIndexRoute,
