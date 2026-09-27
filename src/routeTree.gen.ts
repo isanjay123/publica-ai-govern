@@ -10,11 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as GrievancesRouteImport } from './routes/grievances'
 import { Route as IntegrityRouteImport } from './routes/integrity'
+import { Route as OfficerRouteImport } from './routes/officer'
+import { Route as OversightRouteImport } from './routes/oversight'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
@@ -25,6 +28,11 @@ import { Route as ServicesCodeRouteImport } from './routes/services/$code'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssistantRoute = AssistantRouteImport.update({
@@ -50,6 +58,16 @@ const GrievancesRoute = GrievancesRouteImport.update({
 const IntegrityRoute = IntegrityRouteImport.update({
   id: '/integrity',
   path: '/integrity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfficerRoute = OfficerRouteImport.update({
+  id: '/officer',
+  path: '/officer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OversightRoute = OversightRouteImport.update({
+  id: '/oversight',
+  path: '/oversight',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -85,11 +103,14 @@ const ServicesCodeRoute = ServicesCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/integrity': typeof IntegrityRoute
+  '/officer': typeof OfficerRoute
+  '/oversight': typeof OversightRoute
   '/profile': typeof ProfileRoute
   '/transparency': typeof TransparencyRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
@@ -99,11 +120,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/integrity': typeof IntegrityRoute
+  '/officer': typeof OfficerRoute
+  '/oversight': typeof OversightRoute
   '/profile': typeof ProfileRoute
   '/transparency': typeof TransparencyRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
@@ -114,11 +138,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/integrity': typeof IntegrityRoute
+  '/officer': typeof OfficerRoute
+  '/oversight': typeof OversightRoute
   '/profile': typeof ProfileRoute
   '/transparency': typeof TransparencyRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
@@ -130,11 +157,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/assistant'
     | '/auth'
     | '/dashboard'
     | '/grievances'
     | '/integrity'
+    | '/officer'
+    | '/oversight'
     | '/profile'
     | '/transparency'
     | '/applications/$reference'
@@ -144,11 +174,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/assistant'
     | '/auth'
     | '/dashboard'
     | '/grievances'
     | '/integrity'
+    | '/officer'
+    | '/oversight'
     | '/profile'
     | '/transparency'
     | '/applications/$reference'
@@ -158,11 +191,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/assistant'
     | '/auth'
     | '/dashboard'
     | '/grievances'
     | '/integrity'
+    | '/officer'
+    | '/oversight'
     | '/profile'
     | '/transparency'
     | '/applications/$reference'
@@ -173,11 +209,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AssistantRoute: typeof AssistantRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   GrievancesRoute: typeof GrievancesRoute
   IntegrityRoute: typeof IntegrityRoute
+  OfficerRoute: typeof OfficerRoute
+  OversightRoute: typeof OversightRoute
   ProfileRoute: typeof ProfileRoute
   TransparencyRoute: typeof TransparencyRoute
   ApplicationsReferenceRoute: typeof ApplicationsReferenceRoute
@@ -193,6 +232,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assistant': {
@@ -228,6 +274,20 @@ declare module '@tanstack/react-router' {
       path: '/integrity'
       fullPath: '/integrity'
       preLoaderRoute: typeof IntegrityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/officer': {
+      id: '/officer'
+      path: '/officer'
+      fullPath: '/officer'
+      preLoaderRoute: typeof OfficerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oversight': {
+      id: '/oversight'
+      path: '/oversight'
+      fullPath: '/oversight'
+      preLoaderRoute: typeof OversightRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -277,11 +337,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AssistantRoute: AssistantRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   GrievancesRoute: GrievancesRoute,
   IntegrityRoute: IntegrityRoute,
+  OfficerRoute: OfficerRoute,
+  OversightRoute: OversightRoute,
   ProfileRoute: ProfileRoute,
   TransparencyRoute: TransparencyRoute,
   ApplicationsReferenceRoute: ApplicationsReferenceRoute,
