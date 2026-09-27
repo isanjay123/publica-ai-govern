@@ -10,10 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as GrievancesRouteImport } from './routes/grievances'
 import { Route as IntegrityRouteImport } from './routes/integrity'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
 import { Route as ApplicationsReferenceRouteImport } from './routes/applications/$reference'
 import { Route as ServicesIndexRouteImport } from './routes/services/index'
@@ -22,6 +25,11 @@ import { Route as ServicesCodeRouteImport } from './routes/services/$code'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -42,6 +50,16 @@ const GrievancesRoute = GrievancesRouteImport.update({
 const IntegrityRoute = IntegrityRouteImport.update({
   id: '/integrity',
   path: '/integrity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TransparencyRoute = TransparencyRouteImport.update({
+  id: '/transparency',
+  path: '/transparency',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplicationsIndexRoute = ApplicationsIndexRouteImport.update({
@@ -67,10 +85,13 @@ const ServicesCodeRoute = ServicesCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/assistant': typeof AssistantRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/integrity': typeof IntegrityRoute
+  '/profile': typeof ProfileRoute
+  '/transparency': typeof TransparencyRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
   '/applications/': typeof ApplicationsIndexRoute
@@ -78,10 +99,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/assistant': typeof AssistantRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/integrity': typeof IntegrityRoute
+  '/profile': typeof ProfileRoute
+  '/transparency': typeof TransparencyRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
   '/applications': typeof ApplicationsIndexRoute
@@ -90,10 +114,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/assistant': typeof AssistantRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/grievances': typeof GrievancesRoute
   '/integrity': typeof IntegrityRoute
+  '/profile': typeof ProfileRoute
+  '/transparency': typeof TransparencyRoute
   '/applications/$reference': typeof ApplicationsReferenceRoute
   '/services/$code': typeof ServicesCodeRoute
   '/applications/': typeof ApplicationsIndexRoute
@@ -103,10 +130,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/assistant'
     | '/auth'
     | '/dashboard'
     | '/grievances'
     | '/integrity'
+    | '/profile'
+    | '/transparency'
     | '/applications/$reference'
     | '/services/$code'
     | '/applications/'
@@ -114,10 +144,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/assistant'
     | '/auth'
     | '/dashboard'
     | '/grievances'
     | '/integrity'
+    | '/profile'
+    | '/transparency'
     | '/applications/$reference'
     | '/services/$code'
     | '/applications'
@@ -125,10 +158,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/assistant'
     | '/auth'
     | '/dashboard'
     | '/grievances'
     | '/integrity'
+    | '/profile'
+    | '/transparency'
     | '/applications/$reference'
     | '/services/$code'
     | '/applications/'
@@ -137,10 +173,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AssistantRoute: typeof AssistantRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   GrievancesRoute: typeof GrievancesRoute
   IntegrityRoute: typeof IntegrityRoute
+  ProfileRoute: typeof ProfileRoute
+  TransparencyRoute: typeof TransparencyRoute
   ApplicationsReferenceRoute: typeof ApplicationsReferenceRoute
   ServicesCodeRoute: typeof ServicesCodeRoute
   ApplicationsIndexRoute: typeof ApplicationsIndexRoute
@@ -154,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -182,6 +228,20 @@ declare module '@tanstack/react-router' {
       path: '/integrity'
       fullPath: '/integrity'
       preLoaderRoute: typeof IntegrityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transparency': {
+      id: '/transparency'
+      path: '/transparency'
+      fullPath: '/transparency'
+      preLoaderRoute: typeof TransparencyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/applications/': {
@@ -217,10 +277,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AssistantRoute: AssistantRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   GrievancesRoute: GrievancesRoute,
   IntegrityRoute: IntegrityRoute,
+  ProfileRoute: ProfileRoute,
+  TransparencyRoute: TransparencyRoute,
   ApplicationsReferenceRoute: ApplicationsReferenceRoute,
   ServicesCodeRoute: ServicesCodeRoute,
   ApplicationsIndexRoute: ApplicationsIndexRoute,
