@@ -71,13 +71,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             to={item.to}
             onClick={onNavigate}
             className={cn(
-              "relative rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "relative whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
               active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
             {item.label}
             {active && (
-              <span className="absolute inset-x-3 -bottom-px hidden h-0.5 rounded-full bg-accent lg:block" />
+              <span className="absolute inset-x-3 -bottom-px hidden h-0.5 rounded-full bg-accent xl:block" />
             )}
           </Link>
         );
@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center gap-3 px-4 sm:px-6">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+              <Button variant="ghost" size="icon" className="xl:hidden" aria-label="Open menu">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -106,7 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <Logo />
 
-          <nav className="ml-6 hidden items-center gap-1 lg:flex">
+          <nav className="ml-4 hidden items-center gap-0.5 xl:flex">
             <NavLinks />
           </nav>
 

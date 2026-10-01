@@ -36,7 +36,7 @@ export const Route = createFileRoute("/transparency")({
   component: TransparencyPage,
 });
 
-const PIE_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
+const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
 function TransparencyPage() {
   const k = TRANSPARENCY.kpis;
@@ -79,8 +79,8 @@ function TransparencyPage() {
                 <YAxis tickLine={false} axisLine={false} className="text-xs" />
                 <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Area type="monotone" dataKey="applications" name="Received" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.18} strokeWidth={2} />
-                <Area type="monotone" dataKey="completed" name="Completed" stroke="hsl(var(--chart-2))" fill="hsl(var(--chart-2))" fillOpacity={0.18} strokeWidth={2} />
+                <Area type="monotone" dataKey="applications" name="Received" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.18} strokeWidth={2} />
+                <Area type="monotone" dataKey="completed" name="Completed" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.18} strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -114,7 +114,7 @@ function TransparencyPage() {
                 <XAxis dataKey="department" tickLine={false} axisLine={false} className="text-xs" interval={0} angle={-12} textAnchor="end" height={54} />
                 <YAxis tickLine={false} axisLine={false} className="text-xs" />
                 <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-                <Bar dataKey="applications" name="Applications" fill="hsl(var(--chart-1))" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="applications" name="Applications" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -129,8 +129,8 @@ function TransparencyPage() {
                 <XAxis dataKey="month" tickLine={false} axisLine={false} className="text-xs" />
                 <YAxis tickLine={false} axisLine={false} className="text-xs" />
                 <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-                <Bar dataKey="avgDays" name="Average days" fill="hsl(var(--chart-3))" radius={[6, 6, 0, 0]} />
-                <Line type="monotone" dataKey="avgDays" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
+                <Bar dataKey="avgDays" name="Average days" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
+                <Line type="monotone" dataKey="avgDays" stroke="var(--chart-2)" strokeWidth={2} dot={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>

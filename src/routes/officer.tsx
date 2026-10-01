@@ -131,7 +131,7 @@ function OfficerDesk() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Active cases" value={OFFICER_QUEUE.activeCases} change={6} spark={[24, 26, 29, 30, 31, 32]} index={0} />
         <StatCard label="Approaching deadline" value={OFFICER_QUEUE.approachingSla} change={14} spark={[4, 5, 6, 7, 7, 8]} tone="warning" index={1} />
-        <StatCard label="Delayed" value={OFFICER_QUEUE.delayed} change={-20} spark={[5, 5, 4, 4, 3, 3]} tone="danger" index={2} />
+        <StatCard label="Delayed" value={OFFICER_QUEUE.delayed} change={-20} spark={[5, 5, 4, 4, 3, 3]} tone="warning" index={2} />
         <StatCard label="Documents checked today" value={OFFICER_QUEUE.verifiedToday} change={18} spark={[8, 9, 11, 12, 13, 14]} tone="success" index={3} />
       </div>
 

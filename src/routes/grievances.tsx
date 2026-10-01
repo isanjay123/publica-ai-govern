@@ -41,8 +41,8 @@ const CATEGORIES = [
 
 function GrievancesPage() {
   const { grievances, addGrievance, notify } = usePublica();
-  const [category, setCategory] = useState(CATEGORIES[1]);
-  const [department, setDepartment] = useState(DEPARTMENTS[0].code);
+  const [category, setCategory] = useState<string>(CATEGORIES[1]!);
+  const [department, setDepartment] = useState<string>(DEPARTMENTS[0]!.code);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
 

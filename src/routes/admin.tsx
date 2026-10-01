@@ -72,8 +72,8 @@ function AdminPage() {
                 <XAxis dataKey="month" tickLine={false} axisLine={false} className="text-xs" />
                 <YAxis tickLine={false} axisLine={false} className="text-xs" />
                 <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-                <Line type="monotone" dataKey="applications" name="Received" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="completed" name="Completed" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="applications" name="Received" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="completed" name="Completed" stroke="var(--chart-2)" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -119,7 +119,7 @@ function AdminPage() {
                   <XAxis type="number" tickLine={false} axisLine={false} className="text-xs" />
                   <YAxis type="category" dataKey="department" tickLine={false} axisLine={false} width={120} className="text-xs" />
                   <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-                  <Bar dataKey="slaCompliance" name="Compliance %" fill="hsl(var(--chart-2))" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="slaCompliance" name="Compliance %" fill="var(--chart-2)" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
