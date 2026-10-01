@@ -30,7 +30,7 @@ export const Route = createFileRoute("/services/$code")({
   component: ServiceDetail,
 });
 
-type UploadedDoc = { name: string; type: string; status: "verified" | "flagged" | "pending"; note?: string };
+type UploadedDoc = { name: string; type: string; status: "verified" | "flagged" | "pending"; note?: string | undefined };
 
 const VERIFY_STEPS = [
   "Security validation",
@@ -135,7 +135,7 @@ function ServiceDetail() {
           action: "Application submitted",
           actor: "Citizen portal",
           department: service.department,
-          comment: notes || undefined,
+          ...(notes ? { comment: notes } : {}),
         },
       ],
       documents: docs.map((d) => ({ name: d.name, type: d.type, status: d.status })),

@@ -37,8 +37,8 @@ export const Route = createFileRoute("/integrity")({
 
 function IntegrityPage() {
   const { reports, addReport } = usePublica();
-  const [category, setCategory] = useState(INTEGRITY_CATEGORIES[0]);
-  const [department, setDepartment] = useState(DEPARTMENTS[0].code);
+  const [category, setCategory] = useState<string>(INTEGRITY_CATEGORIES[0]!);
+  const [department, setDepartment] = useState<string>(DEPARTMENTS[0]!.code);
   const [description, setDescription] = useState("");
   const [anonymous, setAnonymous] = useState(true);
   const [contact, setContact] = useState("");
