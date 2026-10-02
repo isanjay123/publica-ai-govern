@@ -783,6 +783,14 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      verify_audit_chain: {
+        Args: never
+        Returns: {
+          first_broken_id: number
+          total: number
+          valid: boolean
+        }[]
+      }
     }
     Enums: {
       app_role:
