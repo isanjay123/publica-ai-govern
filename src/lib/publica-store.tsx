@@ -8,6 +8,14 @@ import {
   type IntegrityReport,
   type Role,
 } from "@/lib/demo-data";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  getMe,
+  listMyApplications,
+  listMyGrievances,
+  listMyNotifications,
+  markNotificationsRead,
+} from "@/lib/publica.functions";
 
 export type Notification = {
   id: string;
@@ -36,6 +44,11 @@ type Ctx = {
   notifications: Notification[];
   notify: (title: string, body: string) => void;
   markAllRead: () => void;
+  user: { id: string; email: string | null } | null;
+  realRoles: string[];
+  authReady: boolean;
+  refresh: () => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 const PublicaContext = createContext<Ctx | null>(null);
@@ -55,6 +68,52 @@ export function PublicaProvider({ children }: { children: ReactNode }) {
   const [grievances, setGrievances] = useState<Grievance[]>(GRIEVANCES);
   const [reports, setReports] = useState<IntegrityReport[]>(INTEGRITY_REPORTS);
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
+
+  const [user, setUser] = useState<{ id: string; email: string | null } | null>(null);
+  const [realRoles, setRealRoles] = useState<string[]>([]);
+  const [authReady, setAuthReady] = useState(false);
+
+  const refresh = useCallback(async () => {
+    try {
+      const [me, apps, griev, notes] = await Promise.all([
+        getMe(),
+        listMyApplications(),
+        listMyGrievances(),
+        listMyNotifications(),
+      ]);
+      if (me.fullName) setCitizenName(me.fullName);
+      setRealRoles(me.roles);
+      setApplications([...(apps as Application[]), ...APPLICATIONS]);
+      setGrievances([...griev, ...GRIEVANCES]);
+      if (notes.length) setNotifications(notes);
+    } catch (e) {
+      console.error("Could not load account data", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const apply = (u: { id: string; email?: string | null } | null) => {
+      setUser(u ? { id: u.id, email: u.email ?? null } : null);
+      setAuthReady(true);
+    };
+    supabase.auth.getSession().then(({ data }) => apply(data.session?.user ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
+        apply(session?.user ?? null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) void refresh();
+    else {
+      setApplications(APPLICATIONS);
+      setGrievances(GRIEVANCES);
+      setNotifications(INITIAL_NOTIFICATIONS);
+      setRealRoles([]);
+    }
+  }, [user, refresh]);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("publica-theme");
@@ -93,9 +152,19 @@ export function PublicaProvider({ children }: { children: ReactNode }) {
       addReport: (r) => setReports((prev) => [r, ...prev]),
       notifications,
       notify,
-      markAllRead: () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))),
+      markAllRead: () => {
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        if (user) void markNotificationsRead();
+      },
+      user,
+      realRoles,
+      authReady,
+      refresh,
+      signOut: async () => {
+        await supabase.auth.signOut();
+      },
     }),
-    [role, language, theme, citizenName, applications, grievances, reports, notifications, notify],
+    [role, language, theme, citizenName, applications, grievances, reports, notifications, notify, user, realRoles, authReady, refresh],
   );
 
   return <PublicaContext.Provider value={value}>{children}</PublicaContext.Provider>;
