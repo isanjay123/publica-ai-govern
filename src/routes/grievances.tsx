@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { DEPARTMENTS, GRIEVANCE_FLOW, departmentByCode } from "@/lib/demo-data";
 import { nextReference, usePublica } from "@/lib/publica-store";
+import { createGrievance } from "@/lib/publica.functions";
 
 export const Route = createFileRoute("/grievances")({
   head: () => ({
@@ -40,14 +41,30 @@ const CATEGORIES = [
 ];
 
 function GrievancesPage() {
-  const { grievances, addGrievance, notify } = usePublica();
+  const { grievances, addGrievance, notify, user, refresh } = usePublica();
+  const [busy, setBusy] = useState(false);
   const [category, setCategory] = useState<string>(CATEGORIES[1]!);
   const [department, setDepartment] = useState<string>(DEPARTMENTS[0]!.code);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (user) {
+      setBusy(true);
+      try {
+        const { reference } = await createGrievance({ data: { category, departmentCode: department, subject, description } });
+        await refresh();
+        toast.success(`Grievance ${reference} submitted`, { description: "You will be notified at every stage." });
+        setSubject("");
+        setDescription("");
+      } catch (err) {
+        toast.error("Could not submit", { description: err instanceof Error ? err.message : "Please check the details and try again." });
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     const reference = nextReference("GRV");
     addGrievance({
       reference,
@@ -110,8 +127,8 @@ function GrievancesPage() {
               <Label htmlFor="desc">What happened?</Label>
               <Textarea id="desc" rows={5} value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
-            <Button type="submit" className="w-full">
-              Submit grievance
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Submitting…" : user ? "Submit grievance" : "Submit (sample — sign in to save)"}
             </Button>
             <p className="text-xs text-muted-foreground">
               You will receive a notification when your grievance is acknowledged, assigned, reviewed and resolved.
