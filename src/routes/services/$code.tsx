@@ -12,6 +12,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { STAGES, departmentByCode, serviceByCode, type Application } from "@/lib/demo-data";
 import { nextReference, usePublica } from "@/lib/publica-store";
+import { supabase } from "@/integrations/supabase/client";
+import { createApplication, verifyDocument } from "@/lib/publica.functions";
+
+type Verification = {
+  detectedType: string;
+  documentDetected: boolean;
+  requiredInfoPresent: boolean;
+  formatValid: boolean;
+  needsReview: boolean;
+  explanation: string;
+  confidence: number;
+  model: string;
+};
+
+function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
 
 export const Route = createFileRoute("/services/$code")({
   head: ({ params }) => {
@@ -30,7 +52,16 @@ export const Route = createFileRoute("/services/$code")({
   component: ServiceDetail,
 });
 
-type UploadedDoc = { name: string; type: string; status: "verified" | "flagged" | "pending"; note?: string | undefined };
+type UploadedDoc = {
+  name: string;
+  type: string;
+  status: "verified" | "flagged" | "pending";
+  note?: string | undefined;
+  mime?: string;
+  size?: number;
+  storagePath?: string;
+  verification?: Verification | null;
+};
 
 const VERIFY_STEPS = [
   "Security validation",
@@ -45,7 +76,8 @@ function ServiceDetail() {
   const { code } = useParams({ from: "/services/$code" });
   const service = serviceByCode(code);
   const navigate = useNavigate();
-  const { addApplication, notify, citizenName } = usePublica();
+  const { addApplication, notify, citizenName, user, refresh } = usePublica();
+  const [submitting, setSubmitting] = useState(false);
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
   const [verifying, setVerifying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -79,6 +111,16 @@ function ServiceDetail() {
       toast.error("Some files were rejected", { description: "Only PDF, JPG, PNG and DOCX files are accepted." });
     }
     if (!accepted.length) return;
+    const tooBig = accepted.find((f) => f.size > 10 * 1024 * 1024);
+    if (tooBig) {
+      toast.error("File too large", { description: `${tooBig.name} is over 10 MB.` });
+      return;
+    }
+
+    if (user) {
+      void verifyReal(accepted);
+      return;
+    }
 
     setVerifying(true);
     setProgress(0);
@@ -112,8 +154,77 @@ function ServiceDetail() {
     }, 320 * VERIFY_STEPS.length + 200);
   };
 
-  const submit = (e: React.FormEvent) => {
+  const verifyReal = async (files: File[]) => {
+    setVerifying(true);
+    setProgress(10);
+    for (const [i, f] of files.entries()) {
+      try {
+        const mime = f.type || (f.name.toLowerCase().endsWith(".docx") ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "");
+        const path = `${user!.id}/${Date.now()}-${f.name.replace(/[^\w.-]+/g, "_")}`;
+        const { error: upErr } = await supabase.storage.from("application-documents").upload(path, f, { contentType: mime });
+        if (upErr) throw new Error(upErr.message);
+        setProgress(20 + (i / files.length) * 40);
+        const base64 = await fileToBase64(f);
+        const res = await verifyDocument({ data: { fileName: f.name, mime, base64, serviceCode: service.code } });
+        setProgress(60 + ((i + 1) / files.length) * 40);
+        if (!res.ok) {
+          toast.error("Document rejected", { description: res.error });
+          continue;
+        }
+        const v = res.result;
+        setDocs((prev) => [
+          ...prev,
+          {
+            name: f.name,
+            type: v.detectedType,
+            status: v.needsReview ? "flagged" : "verified",
+            note: v.explanation,
+            mime,
+            size: f.size,
+            storagePath: path,
+            verification: v,
+          },
+        ]);
+      } catch (err) {
+        toast.error("Upload failed", { description: err instanceof Error ? err.message : "Please try again." });
+      }
+    }
+    setProgress(100);
+    setVerifying(false);
+  };
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (user) {
+      setSubmitting(true);
+      try {
+        const { reference } = await createApplication({
+          data: {
+            serviceCode: service.code,
+            applicantName,
+            district,
+            notes,
+            documents: docs
+              .filter((d) => d.storagePath)
+              .map((d) => ({
+                fileName: d.name,
+                mime: d.mime ?? "",
+                size: d.size ?? 0,
+                storagePath: d.storagePath!,
+                verification: d.verification ?? null,
+              })),
+          },
+        });
+        await refresh();
+        toast.success(`Application ${reference} submitted`);
+        navigate({ to: "/applications/$reference", params: { reference } });
+      } catch (err) {
+        toast.error("Could not submit", { description: err instanceof Error ? err.message : "Please try again." });
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
     const reference = nextReference("PUB");
     const app: Application = {
       reference,
@@ -141,6 +252,7 @@ function ServiceDetail() {
       documents: docs.map((d) => ({ name: d.name, type: d.type, status: d.status })),
       demo: true,
     };
+    toast.info("Saved in this session only", { description: "Sign in to submit a real application." });
     addApplication(app);
     notify("Application submitted", `${service.name} — ${reference} is now in the queue.`);
     toast.success(`Application ${reference} submitted`);
@@ -214,7 +326,9 @@ function ServiceDetail() {
 
           <div className="card-elevated animate-rise p-6">
             <h2 className="text-base font-semibold">Documents</h2>
-            <p className="mt-1 text-sm text-muted-foreground">PDF, JPG, PNG or DOCX. Each file is checked automatically.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              PDF, JPG, PNG or DOCX, up to 10 MB. {user ? "Each file is stored securely and read by Publica AI." : "Sign in to have files read by Publica AI — without an account the check is simulated."}
+            </p>
 
             <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-6 py-10 text-center transition-colors hover:border-accent">
               <Upload className="h-6 w-6 text-muted-foreground" />
@@ -289,8 +403,8 @@ function ServiceDetail() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button type="submit" size="lg">
-              Submit application
+            <Button type="submit" size="lg" disabled={submitting || verifying}>
+              {submitting ? "Submitting…" : "Submit application"}
             </Button>
             <Button type="button" size="lg" variant="outline" asChild>
               <Link to="/services">Back to services</Link>
