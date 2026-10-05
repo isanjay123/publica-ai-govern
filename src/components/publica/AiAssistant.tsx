@@ -3,7 +3,8 @@ import { Bot, Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { answerFromKnowledge, AI_SUGGESTIONS, LANGUAGES } from "@/lib/demo-data";
+import { AI_SUGGESTIONS, LANGUAGES } from "@/lib/demo-data";
+import { askPublica } from "@/lib/publica.functions";
 import { usePublica } from "@/lib/publica-store";
 import { cn } from "@/lib/utils";
 
@@ -22,25 +23,36 @@ export function useAiChat() {
   ]);
   const [pending, setPending] = useState(false);
 
-  const send = (text: string) => {
-    if (!text.trim()) return;
+  const send = async (text: string) => {
+    if (!text.trim() || pending) return;
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text, sources: [] };
+    const history = messages
+      .filter((m) => m.id !== "welcome")
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content }));
     setMessages((m) => [...m, userMsg]);
     setPending(true);
-    const langLabel = LANGUAGES.find((l) => l.code === language)?.label ?? "English";
-    window.setTimeout(() => {
-      const res = answerFromKnowledge(text);
+    try {
+      const res = await askPublica({ data: { question: text, language, history } });
+      setMessages((m) => [
+        ...m,
+        res.ok
+          ? { id: crypto.randomUUID(), role: "assistant", content: res.answer, sources: res.sources }
+          : { id: crypto.randomUUID(), role: "assistant", content: res.error, sources: [] },
+      ]);
+    } catch {
       setMessages((m) => [
         ...m,
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: language === "en" ? res.answer : `${res.answer}\n\n(Answer will be delivered in ${langLabel} once the AI service is connected.)`,
-          sources: res.sources,
+          content: "Publica AI is temporarily unavailable. You can continue using all standard government services.",
+          sources: [],
         },
       ]);
+    } finally {
       setPending(false);
-    }, 700);
+    }
   };
 
   return { messages, send, pending };

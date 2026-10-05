@@ -54,7 +54,7 @@ const STAFF_NAV: Record<Exclude<Role, "citizen">, { to: string; label: string }[
 };
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { role, setRole, language, setLanguage, theme, toggleTheme, notifications, markAllRead, citizenName } =
+  const { role, setRole, language, setLanguage, theme, toggleTheme, notifications, markAllRead, citizenName, user, signOut } =
     usePublica();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -190,9 +190,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <DropdownMenuItem asChild>
                   <Link to="/profile">Profile &amp; settings</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/auth">Sign out</Link>
-                </DropdownMenuItem>
+                {user ? (
+                  <DropdownMenuItem onClick={() => void signOut()}>Sign out</DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link to="/auth">Sign in</Link>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -206,7 +210,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span>PUBLICA — Transparent Governance. Accountable Services.</span>
           <span className="flex items-center gap-2">
             <Badge variant="outline" className="font-normal">
-              Demonstration data
+              {user ? "Signed in · sample records labelled" : "Sample data — sign in to save your work"}
             </Badge>
             Privacy by design · Append-only audit trail
           </span>
