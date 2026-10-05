@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/publica/Logo";
 import { NeuralGraph } from "@/components/publica/NeuralGraph";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { usePublica } from "@/lib/publica-store";
 
 export const Route = createFileRoute("/auth")({
@@ -24,16 +26,49 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { setCitizenName } = usePublica();
+  const { user } = usePublica();
+  const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const submit = (mode: "signin" | "register") => (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) navigate({ to: "/dashboard" });
+  }, [user, navigate]);
+
+  const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === "register" && name.trim()) setCitizenName(name.trim());
-    toast.success(mode === "signin" ? "Signed in to the demo workspace" : "Demo account created", {
-      description: "Accounts are not yet connected to the live system.",
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) toast.error("Could not sign in", { description: error.message });
+    else toast.success("Signed in");
+  };
+
+  const register = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name }, emailRedirectTo: `${window.location.origin}/dashboard` },
     });
-    navigate({ to: "/dashboard" });
+    setBusy(false);
+    if (error) toast.error("Could not register", { description: error.message });
+    else toast.success("Check your email", { description: "Confirm your address to activate your account." });
+  };
+
+  const google = async () => {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
+    if (result?.error) {
+      setBusy(false);
+      toast.error("Google sign-in failed", { description: String(result.error.message ?? result.error) });
+    }
   };
 
   return (
@@ -65,55 +100,72 @@ function AuthPage() {
           <h2 className="text-2xl font-semibold">Welcome to Publica</h2>
           <p className="mt-1.5 text-sm text-muted-foreground">Transparent Governance. Accountable Services.</p>
 
-          <Tabs defaultValue="signin" className="mt-8">
+          <Button variant="outline" className="mt-8 w-full gap-2" onClick={google} disabled={busy}>
+            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+              <path fill="currentColor" d="M21.35 11.1H12v2.98h5.35c-.23 1.5-1.68 4.4-5.35 4.4-3.22 0-5.85-2.67-5.85-5.96S8.78 6.56 12 6.56c1.83 0 3.06.78 3.76 1.45l2.57-2.48C16.68 4 14.55 3 12 3 6.98 3 2.9 7.03 2.9 12s4.08 9 9.1 9c5.25 0 8.73-3.69 8.73-8.89 0-.6-.07-1.05-.15-1.51z" />
+            </svg>
+            Continue with Google
+          </Button>
+          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <Tabs defaultValue="signin">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin" className="mt-6">
-              <form className="space-y-4" onSubmit={submit("signin")}>
+              <form className="space-y-4" onSubmit={signIn}>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="you@example.com" required />
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" placeholder="••••••••" required />
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
-                <Button type="submit" className="w-full">
-                  Sign in
+                <Button type="submit" className="w-full" disabled={busy}>
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />} Sign in
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="register" className="mt-6">
-              <form className="space-y-4" onSubmit={submit("register")}>
+              <form className="space-y-4" onSubmit={register}>
                 <div className="space-y-2">
                   <Label htmlFor="name">Full name</Label>
-                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required />
+                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="remail">Email</Label>
-                  <Input id="remail" type="email" placeholder="you@example.com" required />
+                  <Input id="remail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="rpassword">Password</Label>
-                  <Input id="rpassword" type="password" placeholder="At least 8 characters" required />
+                  <Input
+                    id="rpassword"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    required
+                  />
                 </div>
-                <Button type="submit" className="w-full">
-                  Create account
+                <Button type="submit" className="w-full" disabled={busy}>
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create account
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
 
           <p className="mt-6 text-xs text-muted-foreground">
-            This is a demonstration sign-in. Real accounts, identity verification and secure sessions are connected in
-            the next step.{" "}
+            You can also{" "}
             <Link to="/dashboard" className="font-medium text-foreground underline underline-offset-4">
-              Skip to the dashboard
-            </Link>
+              explore with sample data
+            </Link>{" "}
+            without an account.
           </p>
         </div>
       </div>

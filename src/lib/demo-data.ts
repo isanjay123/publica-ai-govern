@@ -165,7 +165,8 @@ export type Application = {
   humanDecision?: string;
   timeline: TimelineEvent[];
   documents: { name: string; type: string; status: "verified" | "flagged" | "pending" }[];
-  demo: true;
+  demo: boolean;
+  mine?: boolean;
 };
 
 function timeline(dept: string, officer: string, upto: number): TimelineEvent[] {

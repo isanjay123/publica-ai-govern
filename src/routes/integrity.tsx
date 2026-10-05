@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DEPARTMENTS, INTEGRITY_CATEGORIES, departmentByCode } from "@/lib/demo-data";
-import { nextReference, usePublica } from "@/lib/publica-store";
+import { usePublica } from "@/lib/publica-store";
+import { checkIntegrityStatus, submitIntegrityReport } from "@/lib/publica.functions";
 
 export const Route = createFileRoute("/integrity")({
   head: () => ({
@@ -37,6 +38,11 @@ export const Route = createFileRoute("/integrity")({
 
 function IntegrityPage() {
   const { reports, addReport } = usePublica();
+  const [busy, setBusy] = useState(false);
+  const [incidentAt, setIncidentAt] = useState("");
+  const [appRef, setAppRef] = useState("");
+  const [accessCode, setAccessCode] = useState<string | null>(null);
+  const [lookupCode, setLookupCode] = useState("");
   const [category, setCategory] = useState<string>(INTEGRITY_CATEGORIES[0]!);
   const [department, setDepartment] = useState<string>(DEPARTMENTS[0]!.code);
   const [description, setDescription] = useState("");
@@ -47,27 +53,44 @@ function IntegrityPage() {
   const [lookup, setLookup] = useState("");
   const [lookupResult, setLookupResult] = useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const reference = nextReference("PRT");
-    addReport({
-      reference,
-      category,
-      department,
-      status: "Received",
-      createdAt: new Date().toISOString().slice(0, 10),
-      description,
-    });
-    setIssued(reference);
-    setDescription("");
-    setEvidence([]);
-    toast.success("Report received", { description: `Keep your report ID ${reference} to check its status.` });
+    setBusy(true);
+    try {
+      const res = await submitIntegrityReport({
+        data: {
+          category,
+          departmentCode: department,
+          description,
+          applicationReference: appRef,
+          incidentAt,
+          contact: anonymous ? "" : contact,
+        },
+      });
+      addReport({
+        reference: res.reference,
+        category,
+        department,
+        status: "Received",
+        createdAt: new Date().toISOString().slice(0, 10),
+        description,
+      });
+      setIssued(res.reference);
+      setAccessCode(res.accessCode);
+      setDescription("");
+      setEvidence([]);
+      toast.success("Report received securely");
+    } catch (err) {
+      toast.error("Could not submit", { description: err instanceof Error ? err.message : "Please try again." });
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const checkStatus = (e: React.FormEvent) => {
+  const checkStatus = async (e: React.FormEvent) => {
     e.preventDefault();
-    const found = reports.find((r) => r.reference.toLowerCase() === lookup.trim().toLowerCase());
-    setLookupResult(found ? `${found.status} · last updated ${found.createdAt}` : "No report found with that ID.");
+    const res = await checkIntegrityStatus({ data: { reference: lookup, accessCode: lookupCode } });
+    setLookupResult(res.found ? `${res.status} · last updated ${res.updatedAt}` : "No report matches that ID and access code.");
   };
 
   return (
@@ -120,13 +143,13 @@ function IntegrityPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="when">Date and time of the incident</Label>
-                <Input id="when" type="datetime-local" />
+                <Input id="when" type="datetime-local" value={incidentAt} onChange={(e) => setIncidentAt(e.target.value)} />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="ref">Service or application reference (optional)</Label>
-              <Input id="ref" placeholder="PUB-2026-000184" />
+              <Input id="ref" placeholder="PUB-2026-000184" value={appRef} onChange={(e) => setAppRef(e.target.value)} />
             </div>
 
             <div className="space-y-2">
@@ -182,8 +205,8 @@ function IntegrityPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full">
-              Submit report securely
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Submitting…" : "Submit report securely"}
             </Button>
           </div>
 
@@ -193,8 +216,14 @@ function IntegrityPage() {
                 <ShieldCheck className="h-4 w-4 text-success" /> Report received
               </p>
               <p className="mt-1.5 text-sm">
-                Your secure report ID is <span className="font-mono font-semibold">{issued}</span>. Save it — it is the
-                only way to check the status without revealing your identity.
+                Report ID <span className="font-mono font-semibold">{issued}</span>
+                {accessCode && (
+                  <>
+                    {" "}· access code <span className="font-mono font-semibold">{accessCode}</span>
+                  </>
+                )}
+                . Save both — they are the only way to check the status without revealing your identity. The access
+                code is not stored in readable form and cannot be recovered.
               </p>
             </div>
           )}
@@ -203,9 +232,10 @@ function IntegrityPage() {
         <div className="space-y-6">
           <form onSubmit={checkStatus} className="card-elevated animate-rise p-6">
             <h2 className="text-base font-semibold">Check a report status</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Enter your report ID. No identity is required.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Enter your report ID and access code. No identity is required. (Sample reports need no code.)</p>
             <div className="mt-4 flex gap-2">
               <Input value={lookup} onChange={(e) => setLookup(e.target.value)} placeholder="PRT-2026-008421" aria-label="Report ID" />
+              <Input value={lookupCode} onChange={(e) => setLookupCode(e.target.value)} placeholder="Access code" aria-label="Access code" className="max-w-[9rem]" />
               <Button type="submit" variant="outline" className="gap-2">
                 <Search className="h-4 w-4" /> Check
               </Button>
