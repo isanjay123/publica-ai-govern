@@ -20,6 +20,8 @@ import { AppShell } from "@/components/publica/AppShell";
 import { PageHeader, StatCard } from "@/components/publica/Bits";
 import { Button } from "@/components/ui/button";
 import { TRANSPARENCY, DEPARTMENTS } from "@/lib/demo-data";
+import { useQuery } from "@tanstack/react-query";
+import { getLiveStats } from "@/lib/publica.functions";
 
 export const Route = createFileRoute("/transparency")({
   head: () => ({
@@ -42,6 +44,7 @@ function TransparencyPage() {
   const k = TRANSPARENCY.kpis;
   const [district, setDistrict] = useState("All");
   const [year] = useState(2026);
+  const live = useQuery({ queryKey: ["live-stats"], queryFn: () => getLiveStats() });
 
   return (
     <AppShell>
@@ -58,6 +61,17 @@ function TransparencyPage() {
           </Button>
         ))}
       </div>
+
+      {live.data && (
+        <div className="card-elevated animate-rise mb-6 flex flex-wrap items-center gap-x-8 gap-y-2 p-4 text-sm">
+          <span className="font-medium">Live on Publica</span>
+          <span>{live.data.total} applications</span>
+          <span>{live.data.pending} in progress</span>
+          <span>{live.data.completed} decided</span>
+          <span>{live.data.grievancesOpen} open grievances</span>
+          <span className="text-xs text-muted-foreground">Counts only — no personal information.</span>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Applications processed" value={k.processed.toLocaleString()} change={9} spark={[7, 8, 9, 10, 10, 11]} index={0} />

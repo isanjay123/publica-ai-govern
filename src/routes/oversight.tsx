@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { departmentByCode } from "@/lib/demo-data";
 import { usePublica } from "@/lib/publica-store";
+import { listAuditLog, verifyAuditChain } from "@/lib/publica.functions";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/oversight")({
   head: () => ({
@@ -36,8 +38,54 @@ const ANOMALIES = [
 ];
 
 function OversightPage() {
-  const { reports } = usePublica();
+  const { reports, user } = usePublica();
   const [verified, setVerified] = useState<null | boolean>(null);
+  const [verifyMsg, setVerifyMsg] = useState("");
+  const [liveRows, setLiveRows] = useState<typeof AUDIT | null>(null);
+  const [liveNote, setLiveNote] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    listAuditLog().then((res) => {
+      if (!res.ok) {
+        setLiveNote(res.error);
+        return;
+      }
+      setLiveRows(
+        res.rows.map((r) => ({
+          id: r.id,
+          at: new Date(r.occurred_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+          role: r.role ?? "—",
+          action: r.action,
+          app: String((r.payload as Record<string, unknown> | null)?.["reference"] ?? "—"),
+          prev: r.previous_hash ? `${r.previous_hash.slice(0, 4)}…${r.previous_hash.slice(-4)}` : "GENESIS",
+          hash: r.current_hash ? `${r.current_hash.slice(0, 4)}…${r.current_hash.slice(-4)}` : "—",
+        })),
+      );
+    });
+  }, [user]);
+
+  const runVerify = async () => {
+    if (!user) {
+      setVerified(true);
+      setVerifyMsg("Sample chain verified. Sign in with an oversight role to verify the live record.");
+      return;
+    }
+    const res = await verifyAuditChain();
+    if (!res.ok) {
+      setVerified(false);
+      setVerifyMsg(res.error);
+      return;
+    }
+    setVerified(res.valid);
+    setVerifyMsg(
+      res.valid
+        ? `Chain verified: all ${res.total} entries recompute and link correctly.`
+        : `Chain broken at entry ${res.firstBrokenId}. This record may have been altered and needs investigation.`,
+    );
+    toast[res.valid ? "success" : "error"](res.valid ? "Hash chain verified" : "Hash chain mismatch");
+  };
+  const rows = liveRows ?? AUDIT;
 
   return (
     <AppShell>
@@ -121,20 +169,20 @@ function OversightPage() {
               <Button
                 variant="outline"
                 className="gap-2"
-                onClick={() => {
-                  setVerified(true);
-                  toast.success("Hash chain verified", { description: "All 4,824 entries link correctly." });
-                }}
+                onClick={() => void runVerify()}
               >
                 <ShieldCheck className="h-4 w-4" /> Verify chain
               </Button>
             </div>
 
-            {verified && (
-              <p className="animate-fade mt-4 rounded-lg border border-success/40 bg-success/10 p-3 text-sm">
-                Chain verified: every entry's stored previous hash matches the preceding entry.
+            {verified !== null && (
+              <p
+                className={`animate-fade mt-4 rounded-lg border p-3 text-sm ${verified ? "border-success/40 bg-success/10" : "border-warning/50 bg-warning/10"}`}
+              >
+                {verifyMsg}
               </p>
             )}
+            {liveNote && <p className="mt-3 text-xs text-muted-foreground">{liveNote} Showing sample entries.</p>}
 
             <div className="mt-5 overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
@@ -149,7 +197,7 @@ function OversightPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {AUDIT.map((e) => (
+                  {rows.map((e) => (
                     <tr key={e.id} className="border-b last:border-0">
                       <td className="py-3 font-mono text-xs">{e.id}</td>
                       <td className="py-3 text-xs">{e.at}</td>
