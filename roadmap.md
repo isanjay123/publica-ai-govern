@@ -1,22 +1,14 @@
 # Publica roadmap
 
-## Phase 0 — backend foundation (done)
-- [x] Cloud enabled, full schema, RLS + grants, audit hash chain, demo data
+## Done
+- Phase 0: database schema, roles, audit hash chain, sample records
+- Phase 1: all screens, design system, transitions, sample-data mode
+- Phase 2: real accounts (email + Google), Publica AI grounded answers in 8 languages,
+  document upload + AI document checks, applications saved with timeline, grievances,
+  anonymous integrity reports with access code, officer decisions (staff role required),
+  notifications, append-only audit trail + chain verification, live public counts
 
-## Phase 1 — frontend first (current, per user request)
-- [ ] Design system (navy/teal, light+dark), logo, typography
-- [ ] Neural network visualization component
-- [ ] Landing page with all sections
-- [ ] Auth page
-- [ ] App shell: header, nav, notifications, language selector, profile
-- [ ] Citizen: dashboard, services, service detail + apply, applications list, tracking timeline
-- [ ] Grievances, integrity reporting, public transparency dashboard
-- [ ] Publica AI: floating assistant + full page chat
-- [ ] Officer dashboard, Admin command center, Oversight console
-- [ ] Error/empty/loading states, transitions, responsiveness
-
-## Phase 2 — backend wiring
-- [ ] Auth + roles, applications CRUD, document upload + AI verification
-- [ ] AI chat (RAG over rules/knowledge base), multilingual answers
-- [ ] Delay detection, notifications, audit logging, transparency stats
-- [ ] README documentation
+## Open
+- Assign staff roles (officer / admin / oversight) to real accounts — waits on the owner naming who
+- Signed-in end-to-end check — waits on the owner creating the first account
+- Officer queue showing live assigned files per department; SLA background job

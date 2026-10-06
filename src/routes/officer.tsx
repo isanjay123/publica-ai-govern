@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OFFICER_QUEUE, serviceByCode, type Application } from "@/lib/demo-data";
 import { usePublica } from "@/lib/publica-store";
+import { officerDecision } from "@/lib/publica.functions";
 
 export const Route = createFileRoute("/officer")({
   head: () => ({
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/officer")({
 });
 
 function OfficerDesk() {
-  const { applications, grievances, updateApplication, notify } = usePublica();
+  const { applications, grievances, updateApplication, notify, user, refresh } = usePublica();
   const [decision, setDecision] = useState<{ app: Application; kind: "approve" | "reject" } | null>(null);
   const [reason, setReason] = useState("");
 
@@ -41,8 +42,24 @@ function OfficerDesk() {
   const delayed = applications.filter((a) => a.delayFlag === "delayed" || a.delayFlag === "highly_delayed");
   const docReview = applications.filter((a) => a.documents.some((d) => d.status !== "verified"));
 
-  const confirm = () => {
+  const confirm = async () => {
     if (!decision) return;
+    if (user && !decision.app.demo) {
+      if (reason.trim().length < 3) {
+        toast.error("A reason is required for every decision.");
+        return;
+      }
+      const res = await officerDecision({ data: { reference: decision.app.reference, decision: decision.kind, reason } });
+      if (!res.ok) {
+        toast.error("Decision not recorded", { description: res.error });
+        return;
+      }
+      await refresh();
+      toast.success("Decision recorded", { description: "Written to the audit trail against your account." });
+      setDecision(null);
+      setReason("");
+      return;
+    }
     const label = decision.kind === "approve" ? "Approved" : "Rejected";
     updateApplication(decision.app.reference, {
       humanDecision: `${label} by officer ${decision.app.officerCode}${reason ? ` — ${reason}` : ""}`,
