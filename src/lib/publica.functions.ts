@@ -277,13 +277,31 @@ Never decide eligibility or approval. Do not repeat personal identifiers in the 
 export const getMe = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [{ data: profile }, { data: roles }] = await Promise.all([
-      context.supabase.from("profiles").select("full_name, preferred_language").eq("id", context.userId).maybeSingle(),
+    const [{ data: profile }, { data: roles }, { data: authData }] = await Promise.all([
+      context.supabase.from("profiles").select("full_name, email, avatar_url, preferred_language").eq("id", context.userId).maybeSingle(),
       context.supabase.from("user_roles").select("role").eq("user_id", context.userId),
+      context.supabase.auth.getUser(),
     ]);
+
+    // Backfill profile from the identity provider (e.g. Google) when missing
+    const meta = (authData.user?.user_metadata ?? {}) as Record<string, unknown>;
+    const googleName = (meta.full_name ?? meta.name) as string | undefined;
+    const googleAvatar = (meta.avatar_url ?? meta.picture) as string | undefined;
+    const googleEmail = authData.user?.email ?? undefined;
+    const patch: Record<string, string> = {};
+    if ((!profile?.full_name || profile.full_name === "Citizen") && googleName) patch.full_name = googleName;
+    if (!profile?.email && googleEmail) patch.email = googleEmail;
+    if (!profile?.avatar_url && googleAvatar) patch.avatar_url = googleAvatar;
+    if (Object.keys(patch).length) {
+      await context.supabase.from("profiles").update(patch).eq("id", context.userId);
+    }
+
     return {
       userId: context.userId,
-      fullName: profile?.full_name ?? "",
+      fullName: patch.full_name ?? profile?.full_name ?? "",
+      email: patch.email ?? profile?.email ?? googleEmail ?? "",
+      avatarUrl: patch.avatar_url ?? profile?.avatar_url ?? "",
+      preferredLanguage: profile?.preferred_language ?? "en",
       roles: (roles ?? []).map((r) => r.role as string),
     };
   });
