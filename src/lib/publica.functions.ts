@@ -290,9 +290,9 @@ export const getMe = createServerFn({ method: "GET" })
     const googleAvatar = (meta["avatar_url"] ?? meta["picture"]) as string | undefined;
     const googleEmail = authData.user?.email ?? undefined;
     const patch: Record<string, string> = {};
-    if ((!profile?.full_name || profile.full_name === "Citizen") && googleName) patch.full_name = googleName;
-    if (!profile?.email && googleEmail) patch.email = googleEmail;
-    if (!profile?.avatar_url && googleAvatar) patch.avatar_url = googleAvatar;
+    if ((!profile?.full_name || profile.full_name === "Citizen") && googleName) patch["full_name"] = googleName;
+    if (!profile?.email && googleEmail) patch["email"] = googleEmail;
+    if (!profile?.avatar_url && googleAvatar) patch["avatar_url"] = googleAvatar;
     if (Object.keys(patch).length) {
       await context.supabase.from("profiles").update(patch as never).eq("id", context.userId);
     }
