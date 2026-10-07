@@ -31,7 +31,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { citizenName, setCitizenName, language, setLanguage, theme, toggleTheme, role, setRole } = usePublica();
+  const { citizenName, setCitizenName, language, setLanguage, theme, toggleTheme, role, setRole, user } = usePublica();
 
   return (
     <AppShell>
@@ -47,6 +47,21 @@ function ProfilePage() {
         >
           <h2 className="text-base font-semibold">Personal details</h2>
           <div className="mt-4 space-y-4">
+            {user && (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    {citizenName.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <div className="leading-tight">
+                  <p className="text-sm font-semibold">{citizenName}</p>
+                  {user.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
               <Input id="name" value={citizenName} onChange={(e) => setCitizenName(e.target.value)} />
@@ -54,7 +69,7 @@ function ProfilePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue="demo.citizen@example.gov" />
+                <Input id="email" type="email" value={user?.email ?? "demo.citizen@example.gov"} readOnly={!!user} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>

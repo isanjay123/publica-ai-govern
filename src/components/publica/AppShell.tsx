@@ -169,16 +169,29 @@ export function AppShell({ children }: { children: ReactNode }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2">
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground">
-                    <UserRound className="h-4 w-4" />
-                  </span>
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="h-7 w-7 rounded-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground">
+                      <UserRound className="h-4 w-4" />
+                    </span>
+                  )}
                   <span className="hidden text-left leading-tight sm:block">
                     <span className="block text-xs font-semibold">{citizenName}</span>
-                    <span className="block text-[10px] text-muted-foreground">{ROLE_LABELS[role]}</span>
+                    <span className="block text-[10px] text-muted-foreground">{user?.email ?? ROLE_LABELS[role]}</span>
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60">
+                {user && (
+                  <>
+                    <DropdownMenuLabel className="leading-tight">
+                      <span className="block text-sm font-semibold">{citizenName}</span>
+                      {user.email && <span className="block text-xs font-normal text-muted-foreground">{user.email}</span>}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuLabel>Switch demo role</DropdownMenuLabel>
                 {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
                   <DropdownMenuItem key={r} onClick={() => setRole(r)} className="gap-2">
