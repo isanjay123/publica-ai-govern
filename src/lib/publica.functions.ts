@@ -294,14 +294,14 @@ export const getMe = createServerFn({ method: "GET" })
     if (!profile?.email && googleEmail) patch.email = googleEmail;
     if (!profile?.avatar_url && googleAvatar) patch.avatar_url = googleAvatar;
     if (Object.keys(patch).length) {
-      await context.supabase.from("profiles").update(patch).eq("id", context.userId);
+      await context.supabase.from("profiles").update(patch as never).eq("id", context.userId);
     }
 
     return {
       userId: context.userId,
-      fullName: patch.full_name ?? profile?.full_name ?? "",
-      email: patch.email ?? profile?.email ?? googleEmail ?? "",
-      avatarUrl: patch.avatar_url ?? profile?.avatar_url ?? "",
+      fullName: patch["full_name"] ?? profile?.full_name ?? "",
+      email: patch["email"] ?? profile?.email ?? googleEmail ?? "",
+      avatarUrl: patch["avatar_url"] ?? profile?.avatar_url ?? "",
       preferredLanguage: profile?.preferred_language ?? "en",
       roles: (roles ?? []).map((r) => r.role as string),
     };
