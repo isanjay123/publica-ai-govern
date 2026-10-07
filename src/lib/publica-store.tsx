@@ -44,7 +44,7 @@ type Ctx = {
   notifications: Notification[];
   notify: (title: string, body: string) => void;
   markAllRead: () => void;
-  user: { id: string; email: string | null } | null;
+  user: { id: string; email: string | null; avatarUrl: string | null } | null;
   realRoles: string[];
   authReady: boolean;
   refresh: () => Promise<void>;
@@ -95,7 +95,7 @@ export function PublicaProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const apply = (u: { id: string; email?: string | null } | null) => {
-      setUser(u ? { id: u.id, email: u.email ?? null } : null);
+      setUser(u ? { id: u.id, email: u.email ?? null, avatarUrl: null } : null);
       setAuthReady(true);
     };
     supabase.auth.getSession().then(({ data }) => apply(data.session?.user ?? null));
