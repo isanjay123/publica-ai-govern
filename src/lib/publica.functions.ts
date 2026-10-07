@@ -286,8 +286,8 @@ export const getMe = createServerFn({ method: "GET" })
 
     // Backfill profile from the identity provider (e.g. Google) when missing
     const meta = (authData.user?.user_metadata ?? {}) as Record<string, unknown>;
-    const googleName = (meta.full_name ?? meta.name) as string | undefined;
-    const googleAvatar = (meta.avatar_url ?? meta.picture) as string | undefined;
+    const googleName = (meta["full_name"] ?? meta["name"]) as string | undefined;
+    const googleAvatar = (meta["avatar_url"] ?? meta["picture"]) as string | undefined;
     const googleEmail = authData.user?.email ?? undefined;
     const patch: Record<string, string> = {};
     if ((!profile?.full_name || profile.full_name === "Citizen") && googleName) patch.full_name = googleName;
