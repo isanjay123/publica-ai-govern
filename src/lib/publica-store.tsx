@@ -69,7 +69,7 @@ export function PublicaProvider({ children }: { children: ReactNode }) {
   const [reports, setReports] = useState<IntegrityReport[]>(INTEGRITY_REPORTS);
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
 
-  const [user, setUser] = useState<{ id: string; email: string | null } | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string | null; avatarUrl: string | null } | null>(null);
   const [realRoles, setRealRoles] = useState<string[]>([]);
   const [authReady, setAuthReady] = useState(false);
 
@@ -82,6 +82,8 @@ export function PublicaProvider({ children }: { children: ReactNode }) {
         listMyNotifications(),
       ]);
       if (me.fullName) setCitizenName(me.fullName);
+      setUser((u) => (u ? { ...u, email: me.email || u.email, avatarUrl: me.avatarUrl || null } : u));
+      if (me.preferredLanguage) setLanguage(me.preferredLanguage);
       setRealRoles(me.roles);
       setApplications([...(apps as Application[]), ...APPLICATIONS]);
       setGrievances([...griev, ...GRIEVANCES]);
