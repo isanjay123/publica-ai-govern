@@ -31,7 +31,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { citizenName, setCitizenName, language, setLanguage, theme, toggleTheme, role, setRole } = usePublica();
+  const { citizenName, setCitizenName, language, setLanguage, theme, toggleTheme, role, setRole, user } = usePublica();
 
   return (
     <AppShell>
