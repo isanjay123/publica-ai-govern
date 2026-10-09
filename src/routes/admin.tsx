@@ -50,7 +50,7 @@ function AdminPage() {
   ];
 
   return (
-    <AppShell>
+    <AppShell requires={["dept_admin", "super_admin"]}>
       <PageHeader
         title="Command center"
         subtitle="Department performance, workload and operational alerts."

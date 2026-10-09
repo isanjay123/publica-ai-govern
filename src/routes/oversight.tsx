@@ -88,7 +88,7 @@ function OversightPage() {
   const rows = liveRows ?? AUDIT;
 
   return (
-    <AppShell>
+    <AppShell requires={["oversight", "super_admin"]}>
       <PageHeader title="Oversight console" subtitle="Integrity reports, anomaly signals and the append-only audit record." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -142,7 +142,7 @@ function OfficerDesk() {
   };
 
   return (
-    <AppShell>
+    <AppShell requires={["officer", "dept_admin", "super_admin"]}>
       <PageHeader title="Officer desk" subtitle="Your assigned work, ordered by published service deadlines." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
