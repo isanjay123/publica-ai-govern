@@ -30,7 +30,10 @@ export function UserRoles() {
     setBusy(`${userId}:${role}`);
     const res = await setUserRole({ data: { userId, role, grant } });
     setBusy(null);
-    if (!res.ok) return toast.error("Role not changed", { description: res.error ?? "" });
+    if (!res.ok) {
+      toast.error("Role not changed", { description: res.error ?? "" });
+      return;
+    }
     toast.success(grant ? "Role granted" : "Role removed", { description: "Recorded in the audit trail." });
     await qc.invalidateQueries({ queryKey: ["admin-users"] });
   };

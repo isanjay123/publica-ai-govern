@@ -246,7 +246,7 @@ function AccessGate({
   roles,
   children,
 }: {
-  requires?: "signedIn" | Role[];
+  requires?: "signedIn" | Role[] | undefined;
   authReady: boolean;
   signedIn: boolean;
   roles: string[];
