@@ -31,7 +31,7 @@ function ApplicationsPage() {
   });
 
   return (
-    <AppShell>
+    <AppShell requires={"signedIn"}>
       <PageHeader
         title="My applications"
         subtitle="Every application, its current stage and the published service deadline."

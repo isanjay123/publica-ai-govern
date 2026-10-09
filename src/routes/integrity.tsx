@@ -232,7 +232,7 @@ function IntegrityPage() {
         <div className="space-y-6">
           <form onSubmit={checkStatus} className="card-elevated animate-rise p-6">
             <h2 className="text-base font-semibold">Check a report status</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Enter your report ID and access code. No identity is required. (Sample reports need no code.)</p>
+            <p className="mt-1 text-sm text-muted-foreground">Enter your report ID and access code. No identity is required.</p>
             <div className="mt-4 flex gap-2">
               <Input value={lookup} onChange={(e) => setLookup(e.target.value)} placeholder="PRT-2026-008421" aria-label="Report ID" />
               <Input value={lookupCode} onChange={(e) => setLookupCode(e.target.value)} placeholder="Access code" aria-label="Access code" className="max-w-[9rem]" />
@@ -243,9 +243,9 @@ function IntegrityPage() {
             {lookupResult && <p className="animate-fade mt-3 rounded-lg bg-muted p-3 text-sm">{lookupResult}</p>}
           </form>
 
-          <div className="card-elevated animate-rise p-6">
+          {reports.length > 0 && <div className="card-elevated animate-rise p-6">
             <h2 className="text-base font-semibold">Recently filed reports</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Demonstration records — no identifying details shown.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Visible to oversight staff only — no reporter details shown.</p>
             <ul className="mt-4 space-y-3">
               {reports.map((r) => (
                 <li key={r.reference} className="rounded-lg border p-3">
@@ -260,7 +260,7 @@ function IntegrityPage() {
                 </li>
               ))}
             </ul>
-          </div>
+          </div>}
         </div>
       </div>
     </AppShell>

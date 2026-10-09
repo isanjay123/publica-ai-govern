@@ -53,8 +53,8 @@ const STAFF_NAV: Record<Exclude<Role, "citizen">, { to: string; label: string }[
   ],
 };
 
-export function AppShell({ children }: { children: ReactNode }) {
-  const { role, setRole, language, setLanguage, theme, toggleTheme, notifications, markAllRead, citizenName, user, signOut } =
+export function AppShell({ children, requires }: { children: ReactNode; requires?: "signedIn" | Role[] }) {
+  const { realRoles, authReady, role, setRole, language, setLanguage, theme, toggleTheme, notifications, markAllRead, citizenName, user, signOut } =
     usePublica();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -192,8 +192,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuLabel>Switch demo role</DropdownMenuLabel>
-                {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
+                {realRoles.length > 1 && <DropdownMenuLabel>Workspace</DropdownMenuLabel>}
+                {realRoles.length > 1 && (Object.keys(ROLE_LABELS) as Role[]).filter((r) => realRoles.includes(r)).map((r) => (
                   <DropdownMenuItem key={r} onClick={() => setRole(r)} className="gap-2">
                     {role === r ? <Check className="h-3.5 w-3.5" /> : <span className="w-3.5" />}
                     {ROLE_LABELS[r]}
@@ -216,14 +216,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6">
+        <AccessGate requires={requires} authReady={authReady} signedIn={!!user} roles={realRoles}>
+          {children}
+        </AccessGate>
+      </main>
 
       <footer className="border-t py-8">
         <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>PUBLICA — Transparent Governance. Accountable Services.</span>
           <span className="flex items-center gap-2">
             <Badge variant="outline" className="font-normal">
-              {user ? "Signed in · sample records labelled" : "Sample data — sign in to save your work"}
+              {user ? "Signed in" : "Sign in to apply and track your work"}
             </Badge>
             Privacy by design · Append-only audit trail
           </span>
@@ -233,4 +237,43 @@ export function AppShell({ children }: { children: ReactNode }) {
       <FloatingAssistant />
     </div>
   );
+}
+
+function AccessGate({
+  requires,
+  authReady,
+  signedIn,
+  roles,
+  children,
+}: {
+  requires?: "signedIn" | Role[] | undefined;
+  authReady: boolean;
+  signedIn: boolean;
+  roles: string[];
+  children: ReactNode;
+}) {
+  if (!requires) return <>{children}</>;
+  if (!authReady) return <p className="py-24 text-center text-sm text-muted-foreground">Loading…</p>;
+  if (!signedIn)
+    return (
+      <div className="card-elevated mx-auto mt-12 max-w-md p-8 text-center animate-rise">
+        <h1 className="text-lg font-semibold">Sign in to continue</h1>
+        <p className="mt-2 text-sm text-muted-foreground">This page shows your own records, so you need to be signed in.</p>
+        <Button asChild className="mt-6">
+          <Link to="/auth">Sign in or create an account</Link>
+        </Button>
+      </div>
+    );
+  if (requires !== "signedIn" && roles.length > 0 && !requires.some((r) => roles.includes(r)))
+    return (
+      <div className="card-elevated mx-auto mt-12 max-w-md p-8 text-center animate-rise">
+        <h1 className="text-lg font-semibold">Staff access only</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Your account doesn't have the role needed for this page. A Super Admin can grant it.</p>
+        <Button asChild variant="outline" className="mt-6">
+          <Link to="/dashboard">Go to my dashboard</Link>
+        </Button>
+      </div>
+    );
+  if (requires !== "signedIn" && roles.length === 0) return <p className="py-24 text-center text-sm text-muted-foreground">Loading…</p>;
+  return <>{children}</>;
 }

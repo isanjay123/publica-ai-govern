@@ -31,10 +31,10 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { citizenName, setCitizenName, language, setLanguage, theme, toggleTheme, role, setRole, user } = usePublica();
+  const { citizenName, setCitizenName, language, setLanguage, theme, toggleTheme, role, setRole, user, realRoles } = usePublica();
 
   return (
-    <AppShell>
+    <AppShell requires={"signedIn"}>
       <PageHeader title="Profile and settings" subtitle="Your details, language and notification preferences." />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -69,7 +69,7 @@ function ProfilePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={user?.email ?? "demo.citizen@example.gov"} readOnly={!!user} />
+                <Input id="email" type="email" value={user?.email ?? ""} readOnly={!!user} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
@@ -83,7 +83,7 @@ function ProfilePage() {
             <Button type="submit">Save changes</Button>
           </div>
           <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-            <ShieldCheck className="h-4 w-4 text-success" /> Identity verified (demonstration)
+            <ShieldCheck className="h-4 w-4 text-success" /> Signed in with a verified email
           </p>
         </form>
 
@@ -132,12 +132,12 @@ function ProfilePage() {
           </div>
 
           <div className="card-elevated animate-rise p-6">
-            <h2 className="text-base font-semibold">Demonstration role</h2>
+            <h2 className="text-base font-semibold">Your roles</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Switch roles to preview the officer, administrator and oversight workspaces.
+              Choose which workspace to open. Only a Super Admin can grant staff roles.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
+              {(Object.keys(ROLE_LABELS) as Role[]).filter((r) => realRoles.includes(r)).map((r) => (
                 <Badge
                   key={r}
                   onClick={() => setRole(r)}

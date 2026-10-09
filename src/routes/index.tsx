@@ -14,7 +14,10 @@ import { Logo } from "@/components/publica/Logo";
 import { NeuralGraph } from "@/components/publica/NeuralGraph";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TRANSPARENCY, SERVICES } from "@/lib/demo-data";
+import { SERVICES } from "@/lib/demo-data";
+import { useQuery } from "@tanstack/react-query";
+import { getTransparencyData } from "@/lib/publica.functions";
+import { EMPTY_TRANSPARENCY } from "@/lib/live-stats";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -76,6 +79,7 @@ const PILLARS = [
 ];
 
 function Landing() {
+  const TRANSPARENCY = useQuery({ queryKey: ["transparency"], queryFn: () => getTransparencyData() }).data ?? EMPTY_TRANSPARENCY;
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b glass-panel">
@@ -233,7 +237,7 @@ function Landing() {
           <div>
             <h2 className="text-2xl font-semibold">Ready to use Publica?</h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Create an account, or explore the demonstration workspace with sample data.
+              Create an account to apply for services and track every step.
             </p>
           </div>
           <div className="flex gap-3">
@@ -241,7 +245,7 @@ function Landing() {
               <Link to="/auth">Create account</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link to="/dashboard">Explore demo</Link>
+              <Link to="/services">Browse services</Link>
             </Button>
           </div>
         </div>

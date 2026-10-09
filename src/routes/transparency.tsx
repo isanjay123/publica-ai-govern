@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Area,
@@ -19,9 +18,9 @@ import {
 import { AppShell } from "@/components/publica/AppShell";
 import { PageHeader, StatCard } from "@/components/publica/Bits";
 import { Button } from "@/components/ui/button";
-import { TRANSPARENCY, DEPARTMENTS } from "@/lib/demo-data";
+import { EMPTY_TRANSPARENCY } from "@/lib/live-stats";
 import { useQuery } from "@tanstack/react-query";
-import { getLiveStats } from "@/lib/publica.functions";
+import { getTransparencyData } from "@/lib/publica.functions";
 
 export const Route = createFileRoute("/transparency")({
   head: () => ({
@@ -41,10 +40,10 @@ export const Route = createFileRoute("/transparency")({
 const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
 function TransparencyPage() {
+  const live = useQuery({ queryKey: ["transparency"], queryFn: () => getTransparencyData() });
+  const TRANSPARENCY = live.data ?? EMPTY_TRANSPARENCY;
   const k = TRANSPARENCY.kpis;
-  const [district, setDistrict] = useState("All");
-  const [year] = useState(2026);
-  const live = useQuery({ queryKey: ["live-stats"], queryFn: () => getLiveStats() });
+  const year = new Date().getFullYear();
 
   return (
     <AppShell>
@@ -53,33 +52,18 @@ function TransparencyPage() {
         subtitle={`Anonymised service delivery statistics, ${year}. No personal information is published.`}
       />
 
-      <div className="card-elevated animate-rise mb-6 flex flex-wrap items-center gap-2 p-4">
-        <span className="mr-2 text-sm text-muted-foreground">District</span>
-        {["All", ...TRANSPARENCY.districts].map((d) => (
-          <Button key={d} size="sm" variant={district === d ? "default" : "outline"} onClick={() => setDistrict(d)}>
-            {d}
-          </Button>
-        ))}
-      </div>
-
-      {live.data && (
-        <div className="card-elevated animate-rise mb-6 flex flex-wrap items-center gap-x-8 gap-y-2 p-4 text-sm">
-          <span className="font-medium">Live on Publica</span>
-          <span>{live.data.total} applications</span>
-          <span>{live.data.pending} in progress</span>
-          <span>{live.data.completed} decided</span>
-          <span>{live.data.grievancesOpen} open grievances</span>
-          <span className="text-xs text-muted-foreground">Counts only — no personal information.</span>
-        </div>
+      {live.isLoading && <p className="mb-6 text-sm text-muted-foreground">Loading live figures…</p>}
+      {live.data && live.data.kpis.total === 0 && (
+        <p className="card-elevated mb-6 p-4 text-sm text-muted-foreground">No applications have been filed yet. Figures will appear here as citizens use Publica.</p>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Applications processed" value={k.processed.toLocaleString()} change={9} spark={[7, 8, 9, 10, 10, 11]} index={0} />
-        <StatCard label="Average processing time" value={`${k.avgProcessingDays} days`} change={-6} spark={[13, 12, 12, 11, 11, 11]} tone="success" index={1} />
-        <StatCard label="Applications pending" value={k.pending.toLocaleString()} change={4} spark={[6, 6, 7, 7, 7, 7]} tone="warning" index={2} />
-        <StatCard label="Service-level compliance" value={`${k.slaCompliance}%`} change={2} spark={[88, 89, 90, 90, 91, 91]} tone="success" index={3} />
-        <StatCard label="Grievances resolved" value={k.grievancesResolved.toLocaleString()} change={12} spark={[3, 3, 4, 4, 5, 5]} tone="accent" index={4} />
-        <StatCard label="Average resolution time" value={`${k.avgGrievanceDays} days`} change={-11} spark={[7, 7, 6, 6, 5, 5]} tone="success" index={5} />
+        <StatCard label="Applications processed" value={k.processed.toLocaleString()} index={0} />
+        <StatCard label="Average processing time" value={`${k.avgProcessingDays} days`} tone="success" index={1} />
+        <StatCard label="Applications pending" value={k.pending.toLocaleString()} tone="warning" index={2} />
+        <StatCard label="Service-level compliance" value={`${k.slaCompliance}%`} tone="success" index={3} />
+        <StatCard label="Grievances resolved" value={k.grievancesResolved.toLocaleString()} tone="accent" index={4} />
+        <StatCard label="Total applications" value={k.total.toLocaleString()} index={5} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -184,7 +168,7 @@ function TransparencyPage() {
           </tbody>
         </table>
         <p className="mt-4 text-xs text-muted-foreground">
-          Figures are demonstration data, aggregated across {DEPARTMENTS.length} departments. Individual citizens and
+          Live figures, aggregated across {TRANSPARENCY.byDepartment.length} departments. Individual citizens and
           officers are never identified here.
         </p>
       </div>

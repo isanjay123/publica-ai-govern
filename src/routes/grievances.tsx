@@ -82,7 +82,7 @@ function GrievancesPage() {
   };
 
   return (
-    <AppShell>
+    <AppShell requires={"signedIn"}>
       <PageHeader title="Grievances" subtitle="Raise an issue about a service and follow it through to resolution." />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">

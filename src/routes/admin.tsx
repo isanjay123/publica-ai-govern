@@ -17,7 +17,11 @@ import { NeuralGraph } from "@/components/publica/NeuralGraph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ADMIN_INSIGHTS, DEPARTMENTS, SERVICES, STAGES, TRANSPARENCY } from "@/lib/demo-data";
+import { SERVICES, STAGES } from "@/lib/demo-data";
+import { useQuery } from "@tanstack/react-query";
+import { getTransparencyData } from "@/lib/publica.functions";
+import { EMPTY_TRANSPARENCY } from "@/lib/live-stats";
+import { UserRoles } from "@/components/publica/UserRoles";
 import { usePublica } from "@/lib/publica-store";
 
 export const Route = createFileRoute("/admin")({
@@ -32,34 +36,36 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const OFFICERS = [
-  { code: "OFF-BLD-014", name: "Officer 014", department: "BLD", active: 32, closed: 218 },
-  { code: "OFF-REV-007", name: "Officer 007", department: "REV", active: 41, closed: 402 },
-  { code: "OFF-MUN-021", name: "Officer 021", department: "MUN", active: 27, closed: 154 },
-  { code: "OFF-TRN-003", name: "Officer 003", department: "TRN", active: 35, closed: 311 },
-];
-
 function AdminPage() {
   const { applications, grievances } = usePublica();
   const backlog = applications.filter((a) => a.stage !== "Completed").length;
+  const live = useQuery({ queryKey: ["transparency"], queryFn: () => getTransparencyData() });
+  const TRANSPARENCY = live.data ?? EMPTY_TRANSPARENCY;
+  const delayed = applications.filter((a) => a.delayFlag === "delayed" || a.delayFlag === "highly_delayed");
+  const approaching = applications.filter((a) => a.delayFlag === "approaching_sla");
+  const ADMIN_INSIGHTS = [
+    delayed.length ? `${delayed.length} open application(s) are past their published service deadline.` : "No open applications are past their service deadline.",
+    approaching.length ? `${approaching.length} application(s) are close to their deadline.` : "No applications are close to their deadline.",
+    ...TRANSPARENCY.byDepartment.filter((d) => d.applications > 0 && d.slaCompliance < 85).map((d) => `${d.department}: service-level compliance is ${d.slaCompliance}%.`),
+  ];
 
   return (
-    <AppShell>
+    <AppShell requires={["dept_admin", "super_admin"]}>
       <PageHeader
         title="Command center"
         subtitle="Department performance, workload and operational alerts."
         action={
-          <Button variant="outline" className="gap-2">
-            <Settings2 className="h-4 w-4" /> Configure workflows
+          <Button variant="outline" className="gap-2" onClick={() => void live.refetch()}>
+            <Settings2 className="h-4 w-4" /> Refresh figures
           </Button>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Applications this month" value={TRANSPARENCY.monthly.at(-1)!.applications.toLocaleString()} change={7} spark={[82, 84, 90, 95, 101, 108]} index={0} />
-        <StatCard label="Service-level compliance" value={`${TRANSPARENCY.kpis.slaCompliance}%`} change={2} spark={[88, 89, 90, 90, 91, 91]} tone="success" index={1} />
-        <StatCard label="Open backlog" value={backlog} change={-4} spark={[9, 8, 8, 7, 7, backlog]} tone="warning" index={2} />
-        <StatCard label="Open grievances" value={grievances.filter((g) => g.status !== "Resolved").length} change={-9} spark={[4, 4, 3, 3, 2, 2]} tone="accent" index={3} />
+        <StatCard label="Applications this month" value={(TRANSPARENCY.monthly.at(-1)?.applications ?? 0).toLocaleString()} index={0} />
+        <StatCard label="Service-level compliance" value={`${TRANSPARENCY.kpis.slaCompliance}%`} tone="success" index={1} />
+        <StatCard label="Open backlog" value={backlog} tone="warning" index={2} />
+        <StatCard label="Open grievances" value={grievances.filter((g) => g.status !== "Resolved").length} tone="accent" index={3} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -102,7 +108,7 @@ function AdminPage() {
             <Building2 className="h-4 w-4" /> Departments
           </TabsTrigger>
           <TabsTrigger value="officers" className="gap-2">
-            <Users className="h-4 w-4" /> Officers
+            <Users className="h-4 w-4" /> Users & roles
           </TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="workflow" className="gap-2">
@@ -126,23 +132,8 @@ function AdminPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="officers" className="mt-4 grid gap-3 md:grid-cols-2">
-          {OFFICERS.map((o) => (
-            <div key={o.code} className="card-elevated animate-rise flex items-center justify-between p-5">
-              <div>
-                <p className="font-medium">{o.name}</p>
-                <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                  {o.code} · {DEPARTMENTS.find((d) => d.code === o.department)?.name}
-                </p>
-              </div>
-              <div className="text-right text-xs">
-                <p>
-                  <span className="font-semibold">{o.active}</span> active
-                </p>
-                <p className="text-muted-foreground">{o.closed} completed</p>
-              </div>
-            </div>
-          ))}
+        <TabsContent value="officers" className="mt-4">
+          <UserRoles />
         </TabsContent>
 
         <TabsContent value="services" className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">

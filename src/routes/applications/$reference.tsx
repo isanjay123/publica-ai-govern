@@ -32,7 +32,7 @@ function ApplicationDetail() {
 
   if (!app) {
     return (
-      <AppShell>
+      <AppShell requires={"signedIn"}>
         <EmptyState
           title="Application not found"
           body="We couldn't find that reference in your account."
@@ -60,7 +60,7 @@ function ApplicationDetail() {
   ];
 
   return (
-    <AppShell>
+    <AppShell requires={"signedIn"}>
       <PageHeader
         title={service?.name ?? "Application"}
         subtitle={`${app.reference} · ${app.statusLabel}`}

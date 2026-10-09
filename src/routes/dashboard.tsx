@@ -41,7 +41,7 @@ function Dashboard() {
   const openGrievances = grievances.filter((g) => g.status !== "Resolved");
 
   return (
-    <AppShell>
+    <AppShell requires={"signedIn"}>
       <section className="animate-rise mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">
           {greeting()}, {citizenName}

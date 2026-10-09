@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { STAGES, departmentByCode, serviceByCode, type Application } from "@/lib/demo-data";
-import { nextReference, usePublica } from "@/lib/publica-store";
+import { STAGES, departmentByCode, serviceByCode } from "@/lib/demo-data";
+import { usePublica } from "@/lib/publica-store";
 import { supabase } from "@/integrations/supabase/client";
 import { createApplication, verifyDocument } from "@/lib/publica.functions";
 
@@ -76,7 +76,7 @@ function ServiceDetail() {
   const { code } = useParams({ from: "/services/$code" });
   const service = serviceByCode(code);
   const navigate = useNavigate();
-  const { addApplication, notify, citizenName, user, refresh } = usePublica();
+  const { citizenName, user, refresh } = usePublica();
   const [submitting, setSubmitting] = useState(false);
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
   const [verifying, setVerifying] = useState(false);
@@ -225,38 +225,8 @@ function ServiceDetail() {
       }
       return;
     }
-    const reference = nextReference("PUB");
-    const app: Application = {
-      reference,
-      serviceCode: service.code,
-      applicant: applicantName,
-      district,
-      stage: STAGES[0],
-      statusLabel: "Submitted",
-      officerCode: "Awaiting assignment",
-      submittedAt: new Date().toISOString().slice(0, 10),
-      expectedAt: new Date(Date.now() + service.slaDays * 86400000).toISOString().slice(0, 10),
-      slaDeadline: new Date(Date.now() + service.slaDays * 86400000).toISOString().slice(0, 10),
-      processingDays: 0,
-      delayFlag: "normal",
-      timeline: [
-        {
-          at: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          stage: "Application Submitted",
-          action: "Application submitted",
-          actor: "Citizen portal",
-          department: service.department,
-          ...(notes ? { comment: notes } : {}),
-        },
-      ],
-      documents: docs.map((d) => ({ name: d.name, type: d.type, status: d.status })),
-      demo: true,
-    };
-    toast.info("Saved in this session only", { description: "Sign in to submit a real application." });
-    addApplication(app);
-    notify("Application submitted", `${service.name} — ${reference} is now in the queue.`);
-    toast.success(`Application ${reference} submitted`);
-    navigate({ to: "/applications/$reference", params: { reference } });
+    toast.info("Please sign in to submit", { description: "Your application is saved to your account so you can track it." });
+    navigate({ to: "/auth" });
   };
 
   return (
