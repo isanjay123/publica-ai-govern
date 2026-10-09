@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { STAGES, departmentByCode, serviceByCode, type Application } from "@/lib/demo-data";
-import { nextReference, usePublica } from "@/lib/publica-store";
+import { STAGES, departmentByCode, serviceByCode } from "@/lib/demo-data";
+import { usePublica } from "@/lib/publica-store";
 import { supabase } from "@/integrations/supabase/client";
 import { createApplication, verifyDocument } from "@/lib/publica.functions";
 
@@ -76,7 +76,7 @@ function ServiceDetail() {
   const { code } = useParams({ from: "/services/$code" });
   const service = serviceByCode(code);
   const navigate = useNavigate();
-  const { addApplication, notify, citizenName, user, refresh } = usePublica();
+  const { citizenName, user, refresh } = usePublica();
   const [submitting, setSubmitting] = useState(false);
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
   const [verifying, setVerifying] = useState(false);
