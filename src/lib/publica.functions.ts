@@ -773,3 +773,162 @@ export const getLiveStats = createServerFn({ method: "GET" }).handler(async () =
     grievancesOpen: (griev.data ?? []).filter((g) => g.status !== "resolved").length,
   };
 });
+
+/* ------------------------------------------------------------------ */
+/* Staff work queues                                                   */
+/* ------------------------------------------------------------------ */
+
+export const listStaffGrievances = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isStaff } = await context.supabase.rpc("is_staff", { _user_id: context.userId });
+    if (!isStaff) return [];
+    const { data } = await context.supabase
+      .from("grievances")
+      .select("reference_id, category, subject, description, status, created_at, departments(code)")
+      .eq("is_demo", false)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    return (data ?? []).map((g) => ({
+      reference: g.reference_id,
+      category: g.category,
+      subject: g.subject,
+      description: g.description,
+      department: (g.departments as { code: string } | null)?.code ?? "",
+      status: GRIEVANCE_LABEL[g.status] ?? "Submitted",
+      createdAt: g.created_at.slice(0, 10),
+    }));
+  });
+
+export const listIntegrityReports = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("integrity_reports")
+      .select("reference_id, category, description, status, created_at, departments(code)")
+      .eq("is_demo", false)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) return [];
+    return (data ?? []).map((r) => ({
+      reference: r.reference_id,
+      category: r.category,
+      description: r.description,
+      department: (r.departments as { code: string } | null)?.code ?? "",
+      status: REPORT_LABEL[r.status] ?? r.status,
+      createdAt: r.created_at.slice(0, 10),
+    }));
+  });
+
+/* ------------------------------------------------------------------ */
+/* User & role management (super admin only)                           */
+/* ------------------------------------------------------------------ */
+
+const ROLE_VALUES = ["citizen", "officer", "dept_admin", "oversight", "super_admin"] as const;
+
+export const listUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: ok } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
+    if (!ok) return { ok: false as const, error: "Only a Super Admin can manage users.", users: [] };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: profiles }, { data: roles }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id, full_name, email, avatar_url, created_at").order("created_at", { ascending: false }).limit(500),
+      supabaseAdmin.from("user_roles").select("user_id, role"),
+    ]);
+    return {
+      ok: true as const,
+      error: null,
+      users: (profiles ?? []).map((p) => ({
+        id: p.id,
+        name: p.full_name,
+        email: p.email ?? "",
+        avatarUrl: p.avatar_url ?? "",
+        roles: (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role as string),
+      })),
+    };
+  });
+
+export const setUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ userId: z.string().uuid(), role: z.enum(ROLE_VALUES), grant: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: ok } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
+    if (!ok) return { ok: false as const, error: "Only a Super Admin can change roles." };
+    if (!data.grant && data.userId === context.userId && data.role === "super_admin")
+      return { ok: false as const, error: "You can't remove your own Super Admin role." };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const res = data.grant
+      ? await supabaseAdmin.from("user_roles").upsert({ user_id: data.userId, role: data.role }, { onConflict: "user_id,role", ignoreDuplicates: true })
+      : await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", data.role);
+    if (res.error) return { ok: false as const, error: res.error.message };
+    const { appendAudit } = await import("./audit.server");
+    await appendAudit(supabaseAdmin, {
+      userId: context.userId,
+      role: "super_admin",
+      action: data.grant ? "role.granted" : "role.revoked",
+      payload: { target: data.userId, role: data.role },
+    });
+    return { ok: true as const, error: null };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Detailed public aggregates                                          */
+/* ------------------------------------------------------------------ */
+
+export const getTransparencyData = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [{ data: apps }, { data: depts }, { data: griev }] = await Promise.all([
+    supabaseAdmin.from("applications").select("status, submitted_at, completed_at, sla_deadline, department_id").eq("is_demo", false).limit(10000),
+    supabaseAdmin.from("departments").select("id, name"),
+    supabaseAdmin.from("grievances").select("status").eq("is_demo", false).limit(10000),
+  ]);
+  const rows = apps ?? [];
+  const isDone = (s: string) => s === "completed" || s === "rejected";
+  const days = (r: { submitted_at: string; completed_at: string | null }) =>
+    (new Date(r.completed_at ?? Date.now()).getTime() - new Date(r.submitted_at).getTime()) / 86400000;
+  const done = rows.filter((r) => isDone(r.status));
+  const inSla = (r: (typeof rows)[number]) => !!r.completed_at && !!r.sla_deadline && r.completed_at <= r.sla_deadline;
+  const avg = (xs: number[]) => (xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : 0);
+  const monthly = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i), 1);
+    const key = d.toISOString().slice(0, 7);
+    const m = rows.filter((r) => r.submitted_at.startsWith(key));
+    const c = m.filter((r) => isDone(r.status));
+    return { month: d.toLocaleString("en", { month: "short" }), applications: m.length, completed: c.length, avgDays: avg(c.map(days)) };
+  });
+  const byDepartment = (depts ?? []).map((dep) => {
+    const m = rows.filter((r) => r.department_id === dep.id);
+    const c = m.filter((r) => isDone(r.status));
+    return {
+      department: dep.name.replace(/ Department$/, ""),
+      applications: m.length,
+      slaCompliance: c.length ? Math.round((c.filter(inSla).length / c.length) * 100) : 0,
+      avgDays: avg(c.map(days)),
+    };
+  });
+  const now = new Date().toISOString();
+  const delayed = rows.filter((r) => !isDone(r.status) && r.sla_deadline && r.sla_deadline < now).length;
+  const awaiting = rows.filter((r) => r.status === "additional_documents_required").length;
+  return {
+    kpis: {
+      processed: done.length,
+      avgProcessingDays: avg(done.map(days)),
+      pending: rows.length - done.length,
+      slaCompliance: done.length ? Math.round((done.filter(inSla).length / done.length) * 1000) / 10 : 0,
+      grievancesResolved: (griev ?? []).filter((g) => g.status === "resolved").length,
+      total: rows.length,
+    },
+    monthly,
+    byDepartment,
+    statusMix: [
+      { name: "Completed", value: done.length },
+      { name: "In progress", value: rows.length - done.length - awaiting - delayed },
+      { name: "Awaiting citizen", value: awaiting },
+      { name: "Delayed", value: delayed },
+    ],
+  };
+});
