@@ -1,8 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  APPLICATIONS,
-  GRIEVANCES,
-  INTEGRITY_REPORTS,
   type Application,
   type Grievance,
   type IntegrityReport,
@@ -14,6 +11,8 @@ import {
   listMyApplications,
   listMyGrievances,
   listMyNotifications,
+  listStaffGrievances,
+  listIntegrityReports,
   markNotificationsRead,
 } from "@/lib/publica.functions";
 
@@ -53,21 +52,15 @@ type Ctx = {
 
 const PublicaContext = createContext<Ctx | null>(null);
 
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  { id: "n1", title: "Application moved to Officer Review", body: "PUB-2026-000184 is now with the assigned officer.", at: "Today, 3:05 PM", read: false },
-  { id: "n2", title: "Additional document required", body: "PUB-2026-000189 needs a clearer income declaration.", at: "Today, 11:20 AM", read: false },
-  { id: "n3", title: "Grievance assigned", body: "GRV-2026-000033 has been assigned to a reviewing officer.", at: "Yesterday", read: true },
-];
-
 export function PublicaProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>("citizen");
   const [language, setLanguage] = useState("en");
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [citizenName, setCitizenName] = useState("Aarav Menon");
-  const [applications, setApplications] = useState<Application[]>(APPLICATIONS);
-  const [grievances, setGrievances] = useState<Grievance[]>(GRIEVANCES);
-  const [reports, setReports] = useState<IntegrityReport[]>(INTEGRITY_REPORTS);
-  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
+  const [citizenName, setCitizenName] = useState("");
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [grievances, setGrievances] = useState<Grievance[]>([]);
+  const [reports, setReports] = useState<IntegrityReport[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const [user, setUser] = useState<{ id: string; email: string | null; avatarUrl: string | null } | null>(null);
   const [realRoles, setRealRoles] = useState<string[]>([]);
@@ -85,9 +78,18 @@ export function PublicaProvider({ children }: { children: ReactNode }) {
       setUser((u) => (u ? { ...u, email: me.email || u.email, avatarUrl: me.avatarUrl || null } : u));
       if (me.preferredLanguage) setLanguage(me.preferredLanguage);
       setRealRoles(me.roles);
-      setApplications([...(apps as Application[]), ...APPLICATIONS]);
-      setGrievances([...griev, ...GRIEVANCES]);
-      if (notes.length) setNotifications(notes);
+      setApplications(apps as Application[]);
+      setNotifications(notes);
+      const isStaff = me.roles.some((r) => r !== "citizen");
+      const isOversight = me.roles.includes("oversight") || me.roles.includes("super_admin");
+      const [staffGriev, reps] = await Promise.all([
+        isStaff ? listStaffGrievances() : Promise.resolve([]),
+        isOversight ? listIntegrityReports() : Promise.resolve([]),
+      ]);
+      setGrievances((isStaff ? staffGriev : griev) as Grievance[]);
+      setReports(reps as unknown as IntegrityReport[]);
+      const top = (["super_admin", "oversight", "dept_admin", "officer"] as const).find((r) => me.roles.includes(r));
+      setRole((top ?? "citizen") as Role);
     } catch (e) {
       console.error("Could not load account data", e);
     }
@@ -110,10 +112,13 @@ export function PublicaProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user) void refresh();
     else {
-      setApplications(APPLICATIONS);
-      setGrievances(GRIEVANCES);
-      setNotifications(INITIAL_NOTIFICATIONS);
+      setApplications([]);
+      setGrievances([]);
+      setReports([]);
+      setNotifications([]);
       setRealRoles([]);
+      setRole("citizen");
+      setCitizenName("");
     }
   }, [user, refresh]);
 

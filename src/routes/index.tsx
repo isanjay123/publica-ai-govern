@@ -79,6 +79,7 @@ const PILLARS = [
 ];
 
 function Landing() {
+  const TRANSPARENCY = useQuery({ queryKey: ["transparency"], queryFn: () => getTransparencyData() }).data ?? EMPTY_TRANSPARENCY;
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b glass-panel">
