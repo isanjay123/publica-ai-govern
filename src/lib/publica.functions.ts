@@ -515,7 +515,7 @@ export const officerDecision = createServerFn({ method: "POST" })
 
     const { data: app } = await sb
       .from("applications")
-      .select("id, department_id, officer_code")
+      .select("id, department_id, officer_code, citizen_id")
       .eq("reference_id", data.reference)
       .maybeSingle();
     if (!app) return { ok: false as const, error: "Application not found." };
@@ -544,6 +544,15 @@ export const officerDecision = createServerFn({ method: "POST" })
     });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (app.citizen_id) {
+      await supabaseAdmin.from("notifications").insert({
+        user_id: app.citizen_id,
+        title: approved ? "Application approved" : "Application rejected",
+        body: `${data.reference}: ${data.reason}`,
+        channel: "in_app",
+        link: `/applications/${data.reference}`,
+      });
+    }
     const { appendAudit } = await import("./audit.server");
     await appendAudit(supabaseAdmin, {
       userId: context.userId,
